@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/wrm_db_dev?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        jdbc:
+          time_zone: UTC
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+logging:
+  level:
+    com.wrm: DEBUG
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+wrm:
+  scheduling:
+    algorithms:
+      - FIFO
+      - PRIORITY
+      - SJF
+  working-hours:
+    start: "09:00"
+    end: "17:00"
+  max-capacity:
+    default: 50
+    monday: 40
+    tuesday: 40
+    wednesday: 40
+    thursday: 40
+    friday: 40
