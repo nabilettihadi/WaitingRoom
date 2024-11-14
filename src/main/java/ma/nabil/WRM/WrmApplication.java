@@ -1,4 +1,4 @@
-package com.ma.wrm.WRM;
+package ma.nabil.WRM;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

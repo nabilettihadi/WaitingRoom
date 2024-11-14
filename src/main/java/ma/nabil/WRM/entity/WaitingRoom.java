@@ -4,11 +4,11 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ma.nabil.WRM.enums.SchedulingAlgorithm;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import ma.nabil.WRM.enums.*;
 
 @Entity
 @Data
@@ -25,6 +25,12 @@ public class WaitingRoom {
     @Enumerated(EnumType.STRING)
     private SchedulingAlgorithm algorithm;
 
+    @Column(nullable = false)
+    private Integer capacity;
+
+    @Enumerated(EnumType.STRING)
+    private WorkMode workMode;
+
     @OneToMany(mappedBy = "waitingRoom", cascade = CascadeType.ALL)
-    private List<Visitor> visitors = new ArrayList<>();
+    private List<Visit> visits = new ArrayList<>();
 }

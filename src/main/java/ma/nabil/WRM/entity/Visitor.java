@@ -4,9 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ma.nabil.WRM.enums.VisitorStatus;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -18,19 +18,11 @@ public class Visitor {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String firstName;
 
     @Column(nullable = false)
-    private LocalDateTime arrivalTime;
+    private String lastName;
 
-    @Enumerated(EnumType.STRING)
-    private VisitorStatus status;
-
-    private Integer priority;
-    private Integer estimatedProcessingTime;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private WaitingRoom waitingRoom;
+    @OneToMany(mappedBy = "visitor", cascade = CascadeType.ALL)
+    private List<Visit> visits = new ArrayList<>();
 }
