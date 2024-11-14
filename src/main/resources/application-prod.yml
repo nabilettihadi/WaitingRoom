@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wrm_db_prod}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+logging:
+  level:
+    root: ERROR
+    ma.nabil.wrm: INFO
+    org.springframework: WARN
+
+wrm:
+  scheduling:
+    algorithms:
+      - FIFO
+      - PRIORITY
+  working-hours:
+    start: "08:00"
+    end: "18:00"
+  max-capacity:
+    default: 100

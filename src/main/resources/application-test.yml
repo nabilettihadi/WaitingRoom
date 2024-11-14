@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:15-alpine:///wrm_db_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    ma.nabil.wrm: DEBUG
+    org.springframework: INFO
+    org.testcontainers: INFO
+
+wrm:
+  scheduling:
+    algorithms:
+      - FIFO
+  working-hours:
+    start: "09:00"
+    end: "17:00"
+  max-capacity:
+    default: 10
