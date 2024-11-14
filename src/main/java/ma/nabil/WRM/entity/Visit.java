@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ma.nabil.WRM.enums.*;
+import ma.nabil.WRM.enums.VisitorStatus;
 
 import java.time.LocalDateTime;
 

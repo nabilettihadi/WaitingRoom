@@ -4,11 +4,12 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ma.nabil.WRM.enums.SchedulingAlgorithm;
+import ma.nabil.WRM.enums.WorkMode;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import ma.nabil.WRM.enums.*;
 
 @Entity
 @Data

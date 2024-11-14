@@ -1,12 +1,18 @@
-package ma.nabil.WRM.dto;
+package ma.nabil.WRM.dto.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ma.nabil.WRM.enums.VisitorStatus;
 
 import java.time.LocalDateTime;
 
 @Data
-public class VisitDto {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class VisitResponse {
     private Long visitorId;
     private Long waitingRoomId;
     private LocalDateTime arrivalTime;
