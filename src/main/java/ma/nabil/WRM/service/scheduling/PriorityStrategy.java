@@ -11,7 +11,9 @@ public class PriorityStrategy implements SchedulingStrategy {
     @Override
     public Visit getNextVisit(List<Visit> waitingVisits) {
         return waitingVisits.stream()
-                .max(Comparator.comparing(Visit::getPriority))
+                .max(Comparator
+                        .comparing(Visit::getPriority)
+                        .thenComparing(Visit::getArrivalTime))
                 .orElse(null);
     }
 

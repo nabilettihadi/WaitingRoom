@@ -11,7 +11,9 @@ public class SJFStrategy implements SchedulingStrategy {
     @Override
     public Visit getNextVisit(List<Visit> waitingVisits) {
         return waitingVisits.stream()
-                .min(Comparator.comparing(Visit::getEstimatedProcessingTime))
+                .min(Comparator
+                        .comparing(Visit::getEstimatedProcessingTime)
+                        .thenComparing(Visit::getArrivalTime))
                 .orElse(null);
     }
 
