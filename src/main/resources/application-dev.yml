@@ -29,13 +29,5 @@ wrm:
       - FIFO
       - PRIORITY
       - SJF
-  working-hours:
-    start: "09:00"
-    end: "17:00"
   max-capacity:
-    default: 50
-    monday: 40
-    tuesday: 40
-    wednesday: 40
-    thursday: 40
-    friday: 40
+    default: 10

@@ -23,8 +23,6 @@ wrm:
     algorithms:
       - FIFO
       - PRIORITY
-  working-hours:
-    start: "08:00"
-    end: "18:00"
+      - SJF
   max-capacity:
-    default: 100
+    default: 10
