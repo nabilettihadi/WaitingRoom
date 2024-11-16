@@ -7,11 +7,12 @@ import ma.nabil.WRM.dto.response.VisitorResponse;
 import ma.nabil.WRM.entity.Visitor;
 import ma.nabil.WRM.exception.BusinessException;
 import ma.nabil.WRM.repository.VisitorRepository;
+import ma.nabil.WRM.service.VisitorService;
 import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
-public class VisitorServiceImpl extends GenericServiceImpl<Visitor, VisitorRequest, VisitorResponse, Long> {
+public class VisitorServiceImpl extends GenericServiceImpl<Visitor, VisitorRequest, VisitorResponse, Long> implements VisitorService {
     private final VisitorRepository visitorRepository;
     private final VisitorMapper visitorMapper;
 
@@ -32,6 +33,18 @@ public class VisitorServiceImpl extends GenericServiceImpl<Visitor, VisitorReque
     @Override
     protected VisitorResponse toResponse(Visitor visitor) {
         return visitorMapper.toResponse(visitor);
+    }
+
+    @Override
+    public VisitorResponse create(VisitorRequest request) {
+        Visitor visitor = visitorMapper.toEntity(request);
+        visitor = visitorRepository.save(visitor);
+        return visitorMapper.toResponse(visitor);
+    }
+
+    @Override
+    public void delete(Long id) {
+        visitorRepository.deleteById(id);
     }
 
     @Override
