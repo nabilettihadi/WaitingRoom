@@ -17,6 +17,10 @@ public interface VisitMapper {
     @Mapping(target = "endTime", ignore = true)
     Visit toEntity(VisitRequest request);
 
+    @Mapping(source = "visitor.id", target = "visitorId")
+    @Mapping(source = "waitingRoom.id", target = "waitingRoomId")
+    @Mapping(source = "visitor.firstName", target = "visitorFirstName")
+    @Mapping(source = "visitor.lastName", target = "visitorLastName")
     VisitResponse toResponse(Visit visit);
 
     @Mapping(target = "id", ignore = true)
