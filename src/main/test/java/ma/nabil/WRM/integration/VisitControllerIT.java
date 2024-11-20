@@ -5,6 +5,7 @@ import ma.nabil.WRM.dto.request.VisitRequest;
 import ma.nabil.WRM.dto.request.VisitorRequest;
 import ma.nabil.WRM.dto.request.WaitingRoomRequest;
 import ma.nabil.WRM.entity.Visit;
+import ma.nabil.WRM.entity.VisitId;
 import ma.nabil.WRM.enums.VisitorStatus;
 import ma.nabil.WRM.repository.VisitRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -46,8 +47,8 @@ class VisitControllerIT {
         visitorRequest.setLastName("Doe");
 
         String visitorResult = mockMvc.perform(post("/api/visitors")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(visitorRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(visitorRequest)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
@@ -59,8 +60,8 @@ class VisitControllerIT {
         waitingRoomRequest.setCapacity(10);
 
         String roomResult = mockMvc.perform(post("/api/waiting-rooms")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(waitingRoomRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(waitingRoomRequest)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
@@ -78,8 +79,8 @@ class VisitControllerIT {
 
 
         mockMvc.perform(post("/api/visits")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.visitorId").value(visitorId))
                 .andExpect(jsonPath("$.waitingRoomId").value(waitingRoomId))
@@ -93,5 +94,57 @@ class VisitControllerIT {
         assertThat(savedVisit.getStatus()).isEqualTo(VisitorStatus.WAITING);
         assertThat(savedVisit.getPriority()).isEqualTo(1);
         assertThat(savedVisit.getEstimatedProcessingTime()).isEqualTo(30);
+    }
+
+    @Test
+    void shouldUpdateVisitStatus() throws Exception {
+        VisitRequest request = createVisitRequest();
+        createVisit(request);
+
+        mockMvc.perform(put("/api/visits/{visitorId}/{waitingRoomId}/status", visitorId, waitingRoomId)
+                        .param("status", VisitorStatus.IN_PROGRESS.name()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(VisitorStatus.IN_PROGRESS.name()));
+
+        Visit updatedVisit = visitRepository.findById(new VisitId(visitorId, waitingRoomId)).orElseThrow();
+        assertThat(updatedVisit.getStatus()).isEqualTo(VisitorStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void shouldDeleteVisit() throws Exception {
+        VisitRequest request = createVisitRequest();
+        createVisit(request);
+
+        mockMvc.perform(delete("/api/visits/{visitorId}/{waitingRoomId}", visitorId, waitingRoomId))
+                .andExpect(status().isOk());
+
+        assertThat(visitRepository.findById(new VisitId(visitorId, waitingRoomId))).isEmpty();
+    }
+
+    @Test
+    void shouldFindVisitById() throws Exception {
+        VisitRequest request = createVisitRequest();
+        createVisit(request);
+
+        mockMvc.perform(get("/api/visits/{visitorId}/{waitingRoomId}", visitorId, waitingRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.visitorId").value(visitorId))
+                .andExpect(jsonPath("$.waitingRoomId").value(waitingRoomId));
+    }
+
+    private VisitRequest createVisitRequest() {
+        VisitRequest request = new VisitRequest();
+        request.setVisitorId(visitorId);
+        request.setWaitingRoomId(waitingRoomId);
+        request.setPriority(1);
+        request.setEstimatedProcessingTime(30);
+        return request;
+    }
+
+    private void createVisit(VisitRequest request) throws Exception {
+        mockMvc.perform(post("/api/visits")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
     }
 }

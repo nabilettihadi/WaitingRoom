@@ -24,10 +24,8 @@ class VisitorControllerIT {
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @Autowired
     private VisitorRepository visitorRepository;
 
@@ -39,8 +37,8 @@ class VisitorControllerIT {
         request.setLastName("Doe");
 
         mockMvc.perform(post("/api/visitors")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("John"))
                 .andExpect(jsonPath("$.lastName").value("Doe"));
@@ -51,15 +49,15 @@ class VisitorControllerIT {
         VisitorRequest request = new VisitorRequest();
         request.setFirstName("John");
         request.setLastName("Doe");
-        
+
         mockMvc.perform(post("/api/visitors")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/visitors")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -70,8 +68,8 @@ class VisitorControllerIT {
         createRequest.setLastName("Doe");
 
         String createResult = mockMvc.perform(post("/api/visitors")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
@@ -82,15 +80,49 @@ class VisitorControllerIT {
         updateRequest.setLastName("Doe");
 
         mockMvc.perform(put("/api/visitors/{id}", visitorId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Jane"))
                 .andExpect(jsonPath("$.lastName").value("Doe"));
-                
+
 
         Visitor updatedVisitor = visitorRepository.findById(visitorId).orElseThrow();
         assertThat(updatedVisitor.getFirstName()).isEqualTo("Jane");
         assertThat(updatedVisitor.getLastName()).isEqualTo("Doe");
+    }
+
+    @Test
+    void shouldDeleteVisitor() throws Exception {
+        Long visitorId = createVisitor();
+
+        mockMvc.perform(delete("/api/visitors/{id}", visitorId))
+                .andExpect(status().isOk());
+
+        assertThat(visitorRepository.findById(visitorId)).isEmpty();
+    }
+
+    @Test
+    void shouldFindVisitorById() throws Exception {
+        Long visitorId = createVisitor();
+
+        mockMvc.perform(get("/api/visitors/{id}", visitorId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("John"))
+                .andExpect(jsonPath("$.lastName").value("Doe"));
+    }
+
+    private Long createVisitor() throws Exception {
+        VisitorRequest request = new VisitorRequest();
+        request.setFirstName("John");
+        request.setLastName("Doe");
+
+        String result = mockMvc.perform(post("/api/visitors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        return objectMapper.readTree(result).get("id").asLong();
     }
 }
