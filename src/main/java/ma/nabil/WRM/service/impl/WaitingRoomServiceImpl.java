@@ -75,6 +75,22 @@ public class WaitingRoomServiceImpl extends GenericServiceImpl<WaitingRoom, Wait
                 .orElseThrow(() -> new ResourceNotFoundException("Waiting room not found"));
 
         waitingRoom.setAlgorithm(algorithm);
+
+        List<Visit> waitingVisits = waitingRoom.getVisits().stream()
+                .filter(visit -> visit.getStatus() == VisitorStatus.WAITING)
+                .sorted((v1, v2) -> {
+                    return switch (algorithm) {
+                        case FIFO -> v1.getArrivalTime().compareTo(v2.getArrivalTime());
+                        case PRIORITY ->
+                                v1.getPriority().compareTo(v2.getPriority()); // Priorité minimale est prioritaire
+                        case SJF -> v1.getEstimatedProcessingTime().compareTo(v2.getEstimatedProcessingTime());
+                    };
+                })
+                .toList();
+
+        waitingRoom.getVisits().clear();
+        waitingRoom.getVisits().addAll(waitingVisits);
+
         return toResponse(repository.save(waitingRoom));
     }
 

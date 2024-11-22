@@ -1,6 +1,7 @@
 package ma.nabil.WRM.service.scheduling;
 
 import ma.nabil.WRM.entity.Visit;
+import ma.nabil.WRM.enums.SchedulingAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -11,14 +12,14 @@ public class PriorityStrategy implements SchedulingStrategy {
     @Override
     public Visit getNextVisit(List<Visit> waitingVisits) {
         return waitingVisits.stream()
-                .max(Comparator
+                .min(Comparator
                         .comparing(Visit::getPriority)
                         .thenComparing(Visit::getArrivalTime))
                 .orElse(null);
     }
 
     @Override
-    public String getStrategyName() {
-        return "PRIORITY";
+    public SchedulingAlgorithm getAlgorithm() {
+        return SchedulingAlgorithm.PRIORITY;
     }
 }

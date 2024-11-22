@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
@@ -30,19 +29,19 @@ public class VisitServiceImpl extends GenericServiceImpl<Visit, VisitRequest, Vi
     private final VisitMapper visitMapper;
     private final VisitorRepository visitorRepository;
     private final WaitingRoomRepository waitingRoomRepository;
-    private final Map<String, SchedulingStrategy> schedulingStrategies;
+    private final List<SchedulingStrategy> strategies;
 
     public VisitServiceImpl(
             VisitRepository visitRepository,
             VisitMapper visitMapper,
             VisitorRepository visitorRepository,
             WaitingRoomRepository waitingRoomRepository,
-            Map<String, SchedulingStrategy> schedulingStrategies) {
+            List<SchedulingStrategy> strategies) {
         super(visitRepository);
         this.visitMapper = visitMapper;
         this.visitorRepository = visitorRepository;
         this.waitingRoomRepository = waitingRoomRepository;
-        this.schedulingStrategies = schedulingStrategies;
+        this.strategies = strategies;
     }
 
     @Override
@@ -131,9 +130,13 @@ public class VisitServiceImpl extends GenericServiceImpl<Visit, VisitRequest, Vi
             throw new BusinessException("Aucune visite en attente");
         }
 
-        SchedulingStrategy strategy = schedulingStrategies.get(waitingRoom.getAlgorithm().name());
-        Visit nextVisit = strategy.getNextVisit(waitingVisits);
+        SchedulingStrategy strategy = strategies.stream()
+                .filter(s -> s.getAlgorithm() == waitingRoom.getAlgorithm())
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(
+                        "Stratégie de planification non trouvée pour l'algorithme: " + waitingRoom.getAlgorithm()));
 
+        Visit nextVisit = strategy.getNextVisit(waitingVisits);
         if (nextVisit != null) {
             updateStatus(nextVisit.getId(), VisitorStatus.IN_PROGRESS);
         }

@@ -1,6 +1,7 @@
 package ma.nabil.WRM.service.scheduling;
 
 import ma.nabil.WRM.entity.Visit;
+import ma.nabil.WRM.enums.SchedulingAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -16,7 +17,7 @@ public class FIFOStrategy implements SchedulingStrategy {
     }
 
     @Override
-    public String getStrategyName() {
-        return "FIFO";
+    public SchedulingAlgorithm getAlgorithm() {
+        return SchedulingAlgorithm.FIFO;
     }
 }

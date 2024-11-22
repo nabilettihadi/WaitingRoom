@@ -1,6 +1,7 @@
 package ma.nabil.WRM.service.scheduling;
 
 import ma.nabil.WRM.entity.Visit;
+import ma.nabil.WRM.enums.SchedulingAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -18,7 +19,7 @@ public class SJFStrategy implements SchedulingStrategy {
     }
 
     @Override
-    public String getStrategyName() {
-        return "SJF";
+    public SchedulingAlgorithm getAlgorithm() {
+        return SchedulingAlgorithm.SJF;
     }
 }
