@@ -29,11 +29,9 @@ public class Visit {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("visitorId")
-    @JoinColumn(name = "visitor_id")
     private Visitor visitor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("waitingRoomId")
-    @JoinColumn(name = "waiting_room_id")
     private WaitingRoom waitingRoom;
 }

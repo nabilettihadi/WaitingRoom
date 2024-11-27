@@ -1,4 +1,4 @@
-package ma.nabil.WRM.dto.mapper;
+package ma.nabil.WRM.mapper;
 
 import ma.nabil.WRM.config.GlobalMapperConfig;
 import ma.nabil.WRM.dto.request.VisitRequest;
@@ -13,8 +13,6 @@ public interface VisitMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "visitor", ignore = true)
     @Mapping(target = "waitingRoom", ignore = true)
-    @Mapping(target = "startTime", ignore = true)
-    @Mapping(target = "endTime", ignore = true)
     Visit toEntity(VisitRequest request);
 
     @Mapping(source = "visitor.id", target = "visitorId")
@@ -26,7 +24,5 @@ public interface VisitMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "visitor", ignore = true)
     @Mapping(target = "waitingRoom", ignore = true)
-    @Mapping(target = "startTime", ignore = true)
-    @Mapping(target = "endTime", ignore = true)
     void updateEntity(VisitRequest request, @MappingTarget Visit visit);
 }

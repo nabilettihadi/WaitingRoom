@@ -12,5 +12,9 @@ import java.util.List;
 public interface VisitRepository extends JpaRepository<Visit, VisitId> {
     Page<Visit> findAllByWaitingRoom_Id(Long waitingRoomId, Pageable pageable);
 
+    long countByWaitingRoomIdAndStatus(Long waitingRoomId, VisitorStatus status);
+
     List<Visit> findAllByWaitingRoom_IdAndStatus(Long waitingRoomId, VisitorStatus status);
+
+    long countByWaitingRoomIdAndStatusNot(Long waitingRoomId, VisitorStatus status);
 }

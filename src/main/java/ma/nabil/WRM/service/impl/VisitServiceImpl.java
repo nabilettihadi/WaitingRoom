@@ -1,7 +1,6 @@
 package ma.nabil.WRM.service.impl;
 
-import jakarta.transaction.Transactional;
-import ma.nabil.WRM.dto.mapper.VisitMapper;
+import lombok.RequiredArgsConstructor;
 import ma.nabil.WRM.dto.request.VisitRequest;
 import ma.nabil.WRM.dto.response.VisitResponse;
 import ma.nabil.WRM.entity.Visit;
@@ -11,6 +10,7 @@ import ma.nabil.WRM.entity.WaitingRoom;
 import ma.nabil.WRM.enums.VisitorStatus;
 import ma.nabil.WRM.exception.BusinessException;
 import ma.nabil.WRM.exception.ResourceNotFoundException;
+import ma.nabil.WRM.mapper.VisitMapper;
 import ma.nabil.WRM.repository.VisitRepository;
 import ma.nabil.WRM.repository.VisitorRepository;
 import ma.nabil.WRM.repository.WaitingRoomRepository;
@@ -24,80 +24,85 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@Transactional
-public class VisitServiceImpl extends GenericServiceImpl<Visit, VisitRequest, VisitResponse, VisitId> implements VisitService {
+@RequiredArgsConstructor
+public class VisitServiceImpl implements VisitService {
+    private final VisitRepository visitRepository;
     private final VisitMapper visitMapper;
     private final VisitorRepository visitorRepository;
     private final WaitingRoomRepository waitingRoomRepository;
     private final List<SchedulingStrategy> strategies;
 
-    public VisitServiceImpl(
-            VisitRepository visitRepository,
-            VisitMapper visitMapper,
-            VisitorRepository visitorRepository,
-            WaitingRoomRepository waitingRoomRepository,
-            List<SchedulingStrategy> strategies) {
-        super(visitRepository);
-        this.visitMapper = visitMapper;
-        this.visitorRepository = visitorRepository;
-        this.waitingRoomRepository = waitingRoomRepository;
-        this.strategies = strategies;
-    }
-
     @Override
-    protected Visit toEntity(VisitRequest request) {
-        Visit visit = visitMapper.toEntity(request);
-
+    public VisitResponse create(VisitRequest request) {
         Visitor visitor = visitorRepository.findById(request.getVisitorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Visitor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Visiteur non trouvé"));
 
         WaitingRoom waitingRoom = waitingRoomRepository.findById(request.getWaitingRoomId())
-                .orElseThrow(() -> new ResourceNotFoundException("Waiting room not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Salle d'attente non trouvée"));
 
-        if (waitingRoom.getVisits().size() >= waitingRoom.getCapacity()) {
+        if (isWaitingRoomFull(waitingRoom)) {
             throw new BusinessException("La salle d'attente est pleine");
         }
 
-        visit.setId(new VisitId(request.getVisitorId(), request.getWaitingRoomId()));
-        visit.setVisitor(visitor);
-        visit.setWaitingRoom(waitingRoom);
-        visit.setArrivalTime(LocalDateTime.now());
-        visit.setStatus(VisitorStatus.WAITING);
+        try {
+            Visit visit = visitMapper.toEntity(request);
+            visit.setId(new VisitId(
+                    request.getVisitorId(),
+                    request.getWaitingRoomId()
+            ));
+            visit.setVisitor(visitor);
+            visit.setWaitingRoom(waitingRoom);
+            visit.setArrivalTime(LocalDateTime.now());
+            visit.setStatus(VisitorStatus.WAITING);
 
-        return visit;
+            Visit savedVisit = visitRepository.save(visit);
+            return visitMapper.toResponse(savedVisit);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la création de la visite", e);
+        }
+    }
+
+    private boolean isWaitingRoomFull(WaitingRoom waitingRoom) {
+        long activeVisits = visitRepository.countByWaitingRoomIdAndStatusNot(
+                waitingRoom.getId(),
+                VisitorStatus.FINISHED
+        );
+        return activeVisits >= waitingRoom.getCapacity();
     }
 
     @Override
-    protected VisitResponse toResponse(Visit visit) {
+    public VisitResponse findById(VisitId id) {
+        Visit visit = visitRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Visit not found"));
         return visitMapper.toResponse(visit);
     }
 
     @Override
-    protected void updateEntity(VisitRequest request, Visit visit) {
+    public Page<VisitResponse> findAll(Pageable pageable) {
+        return visitRepository.findAll(pageable).map(visitMapper::toResponse);
+    }
+
+    @Override
+    public VisitResponse update(VisitId id, VisitRequest request) {
+        Visit visit = visitRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Visit not found"));
+
         visitMapper.updateEntity(request, visit);
+        visit = visitRepository.save(visit);
+        return visitMapper.toResponse(visit);
     }
 
     @Override
-    protected String getEntityName() {
-        return "Visit";
+    public void delete(VisitId id) {
+        if (!visitRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Visit not found");
+        }
+        visitRepository.deleteById(id);
     }
 
     @Override
-    public VisitResponse create(VisitRequest request) {
-        Visit visit = toEntity(request);
-        visit = repository.save(visit);
-        return toResponse(visit);
-    }
-
-    @Override
-    public Page<VisitResponse> findAllByWaitingRoomId(Long waitingRoomId, Pageable pageable) {
-        return ((VisitRepository) repository).findAllByWaitingRoom_Id(waitingRoomId, pageable)
-                .map(this::toResponse);
-    }
-
-    @Override
-    public VisitResponse updateStatus(VisitId id, VisitorStatus newStatus) {
-        Visit visit = repository.findById(id)
+    public VisitResponse updateStatus(VisitId visitId, VisitorStatus newStatus) {
+        Visit visit = visitRepository.findById(visitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Visit not found"));
 
         validateStatusTransition(visit.getStatus(), newStatus);
@@ -110,20 +115,29 @@ public class VisitServiceImpl extends GenericServiceImpl<Visit, VisitRequest, Vi
             visit.setEndTime(LocalDateTime.now());
         }
 
-        return toResponse(repository.save(visit));
+        return visitMapper.toResponse(visitRepository.save(visit));
     }
 
     @Override
-    public void delete(VisitId visitId) {
-        deleteById(visitId);
+    public Page<VisitResponse> findAllByWaitingRoomId(Long waitingRoomId, Pageable pageable) {
+        return visitRepository.findAllByWaitingRoom_Id(waitingRoomId, pageable).map(visitMapper::toResponse);
     }
 
     @Override
     public void processNextVisit(Long waitingRoomId) {
         WaitingRoom waitingRoom = waitingRoomRepository.findById(waitingRoomId)
-                .orElseThrow(() -> new ResourceNotFoundException("Waiting room not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Salle d'attente non trouvée"));
 
-        List<Visit> waitingVisits = ((VisitRepository) repository)
+        long activeVisits = visitRepository.countByWaitingRoomIdAndStatus(
+                waitingRoomId,
+                VisitorStatus.IN_PROGRESS
+        );
+
+        if (activeVisits > 0) {
+            throw new BusinessException("Il y a déjà une visite en cours");
+        }
+
+        List<Visit> waitingVisits = visitRepository
                 .findAllByWaitingRoom_IdAndStatus(waitingRoomId, VisitorStatus.WAITING);
 
         if (waitingVisits.isEmpty()) {

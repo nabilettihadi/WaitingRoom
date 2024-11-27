@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,5 +23,5 @@ public class Visitor {
     private String lastName;
 
     @OneToMany(mappedBy = "visitor", cascade = CascadeType.ALL)
-    private List<Visit> visits = new ArrayList<>();
+    private List<Visit> visits;
 }

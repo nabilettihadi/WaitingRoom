@@ -1,7 +1,6 @@
 package ma.nabil.WRM.service.impl;
 
-import jakarta.transaction.Transactional;
-import ma.nabil.WRM.dto.mapper.WaitingRoomMapper;
+import lombok.RequiredArgsConstructor;
 import ma.nabil.WRM.dto.request.WaitingRoomRequest;
 import ma.nabil.WRM.dto.response.WaitingRoomResponse;
 import ma.nabil.WRM.entity.Visit;
@@ -10,101 +9,82 @@ import ma.nabil.WRM.enums.SchedulingAlgorithm;
 import ma.nabil.WRM.enums.VisitorStatus;
 import ma.nabil.WRM.enums.WorkMode;
 import ma.nabil.WRM.exception.ResourceNotFoundException;
+import ma.nabil.WRM.mapper.WaitingRoomMapper;
 import ma.nabil.WRM.repository.WaitingRoomRepository;
 import ma.nabil.WRM.service.WaitingRoomService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
 
 @Service
-@Transactional
-public class WaitingRoomServiceImpl extends GenericServiceImpl<WaitingRoom, WaitingRoomRequest, WaitingRoomResponse, Long> implements WaitingRoomService {
+@RequiredArgsConstructor
+public class WaitingRoomServiceImpl implements WaitingRoomService {
+    private final WaitingRoomRepository waitingRoomRepository;
     private final WaitingRoomMapper waitingRoomMapper;
-
-    public WaitingRoomServiceImpl(WaitingRoomRepository waitingRoomRepository, WaitingRoomMapper waitingRoomMapper) {
-        super(waitingRoomRepository);
-        this.waitingRoomMapper = waitingRoomMapper;
-    }
-
-    @Override
-    protected WaitingRoom toEntity(WaitingRoomRequest request) {
-        return waitingRoomMapper.toEntity(request);
-    }
-
-    @Override
-    protected WaitingRoomResponse toResponse(WaitingRoom waitingRoom) {
-        WaitingRoomResponse response = waitingRoomMapper.toResponse(waitingRoom);
-        response.setStats(calculateStats(waitingRoom));
-        return response;
-    }
-
-    public WaitingRoomResponse updateWorkMode(Long id, WorkMode workMode) {
-        WaitingRoom waitingRoom = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Salle d'attente non trouvée"));
-
-        waitingRoom.setWorkMode(workMode);
-        return toResponse(repository.save(waitingRoom));
-    }
 
     @Override
     public WaitingRoomResponse create(WaitingRoomRequest request) {
-        WaitingRoom waitingRoom = toEntity(request);
-        waitingRoom = repository.save(waitingRoom);
-        return toResponse(waitingRoom);
+        WaitingRoom waitingRoom = waitingRoomMapper.toEntity(request);
+        waitingRoom = waitingRoomRepository.save(waitingRoom);
+        return waitingRoomMapper.toResponse(waitingRoom);
+    }
+
+    @Override
+    public WaitingRoomResponse findById(Long id) {
+        WaitingRoom waitingRoom = waitingRoomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting Room not found"));
+        return waitingRoomMapper.toResponse(waitingRoom);
+    }
+
+    @Override
+    public Page<WaitingRoomResponse> findAll(Pageable pageable) {
+        return waitingRoomRepository.findAll(pageable).map(waitingRoomMapper::toResponse);
+    }
+
+    @Override
+    public WaitingRoomResponse update(Long id, WaitingRoomRequest request) {
+        WaitingRoom waitingRoom = waitingRoomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting Room not found"));
+        waitingRoomMapper.updateEntity(request, waitingRoom);
+        waitingRoom = waitingRoomRepository.save(waitingRoom);
+        return waitingRoomMapper.toResponse(waitingRoom);
     }
 
     @Override
     public void delete(Long id) {
-        repository.deleteById(id);
-    }
-
-    @Override
-    protected void updateEntity(WaitingRoomRequest request, WaitingRoom waitingRoom) {
-        waitingRoomMapper.updateEntity(request, waitingRoom);
-    }
-
-    @Override
-    protected String getEntityName() {
-        return "WaitingRoom";
+        if (!waitingRoomRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Waiting Room not found");
+        }
+        waitingRoomRepository.deleteById(id);
     }
 
     @Override
     public WaitingRoomResponse updateAlgorithm(Long id, SchedulingAlgorithm algorithm) {
-        WaitingRoom waitingRoom = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Waiting room not found"));
-
+        WaitingRoom waitingRoom = waitingRoomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting Room not found"));
         waitingRoom.setAlgorithm(algorithm);
+        waitingRoom = waitingRoomRepository.save(waitingRoom);
+        return waitingRoomMapper.toResponse(waitingRoom);
+    }
 
-        List<Visit> waitingVisits = waitingRoom.getVisits().stream()
-                .filter(visit -> visit.getStatus() == VisitorStatus.WAITING)
-                .sorted((v1, v2) -> {
-                    return switch (algorithm) {
-                        case FIFO -> v1.getArrivalTime().compareTo(v2.getArrivalTime());
-                        case PRIORITY ->
-                                v1.getPriority().compareTo(v2.getPriority()); // Priorité minimale est prioritaire
-                        case SJF -> v1.getEstimatedProcessingTime().compareTo(v2.getEstimatedProcessingTime());
-                    };
-                })
-                .toList();
-
-        waitingRoom.getVisits().clear();
-        waitingRoom.getVisits().addAll(waitingVisits);
-
-        return toResponse(repository.save(waitingRoom));
+    @Override
+    public WaitingRoomResponse updateWorkMode(Long id, WorkMode workMode) {
+        WaitingRoom waitingRoom = waitingRoomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting Room not found"));
+        waitingRoom.setWorkMode(workMode);
+        waitingRoom = waitingRoomRepository.save(waitingRoom);
+        return waitingRoomMapper.toResponse(waitingRoom);
     }
 
     @Override
     public WaitingRoomResponse.WaitingRoomStats getStats(Long id) {
-        WaitingRoom waitingRoom = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Waiting room not found"));
+        WaitingRoom waitingRoom = waitingRoomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting Room not found"));
 
-        return calculateStats(waitingRoom);
-    }
-
-    private WaitingRoomResponse.WaitingRoomStats calculateStats(WaitingRoom waitingRoom) {
         List<Visit> visits = waitingRoom.getVisits();
-
         long totalVisits = visits.size();
         long activeVisits = visits.stream()
                 .filter(v -> v.getStatus() == VisitorStatus.WAITING || v.getStatus() == VisitorStatus.IN_PROGRESS)

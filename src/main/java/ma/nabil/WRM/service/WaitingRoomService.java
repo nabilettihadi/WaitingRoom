@@ -5,11 +5,7 @@ import ma.nabil.WRM.dto.response.WaitingRoomResponse;
 import ma.nabil.WRM.enums.SchedulingAlgorithm;
 import ma.nabil.WRM.enums.WorkMode;
 
-public interface WaitingRoomService extends GenericService<WaitingRoomRequest, WaitingRoomResponse, Long> {
-    WaitingRoomResponse create(WaitingRoomRequest request);
-
-    void delete(Long id);
-
+public interface WaitingRoomService extends GenericService<WaitingRoomResponse, WaitingRoomRequest, Long> {
     WaitingRoomResponse updateAlgorithm(Long id, SchedulingAlgorithm algorithm);
 
     WaitingRoomResponse updateWorkMode(Long id, WorkMode workMode);

@@ -8,7 +8,6 @@ import ma.nabil.WRM.enums.SchedulingAlgorithm;
 import ma.nabil.WRM.enums.WorkMode;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -33,5 +32,5 @@ public class WaitingRoom {
     private WorkMode workMode;
 
     @OneToMany(mappedBy = "waitingRoom", cascade = CascadeType.ALL)
-    private List<Visit> visits = new ArrayList<>();
+    private List<Visit> visits;
 }

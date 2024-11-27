@@ -9,8 +9,10 @@ import ma.nabil.WRM.enums.VisitorStatus;
 import ma.nabil.WRM.service.VisitService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/visits")
@@ -19,8 +21,9 @@ public class VisitController {
     private final VisitService visitService;
 
     @PostMapping
-    public ResponseEntity<VisitResponse> create(@Valid @RequestBody VisitRequest request) {
-        return ResponseEntity.ok(visitService.create(request));
+    @ResponseStatus(HttpStatus.CREATED)
+    public VisitResponse create(@Valid @RequestBody VisitRequest request) {
+        return visitService.create(request);
     }
 
     @GetMapping("/{visitorId}/{waitingRoomId}")
